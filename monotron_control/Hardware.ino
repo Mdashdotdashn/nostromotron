@@ -79,6 +79,9 @@ Hardware &Hardware::SInstance()
 }
 
 
+static IntervalTimer gTimer0;
+static IntervalTimer gTimer1;
+
 //-----------------------------------------------------------
 
 bool Hardware::Init(const Hardware::Configuration& configuration)
@@ -109,13 +112,11 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   // Define our signal update rate way lower since we don't need
   // high range for control signals
 
-  IntervalTimer timer0;
-  timer0.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
+  gTimer0.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
 
   // Define our audio update rate using 44100 Hrz
   
-  IntervalTimer timer1;
-  timer1.begin(SOnAudioTimer, 1000000 / configuration_.audioRate_);
+  gTimer1.begin(SOnAudioTimer, 1000000 / configuration_.audioRate_);
 
 }
 
