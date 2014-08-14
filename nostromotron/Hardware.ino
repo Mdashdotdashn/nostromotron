@@ -115,7 +115,7 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   
   // Define our audio update rate using 44100 Hrz
   
-  sTimer0.begin(SOnAudioTimer, 1000000 / configuration_.audioRate_);
+  sTimer0.begin(SOnAudioTimer, 1000000.0f / float(configuration_.audioRate_));
   
   // Makes sre our audio interrupt runs with the highest priority
   NVIC_SET_PRIORITY(IRQ_PIT_CH0, 0);
