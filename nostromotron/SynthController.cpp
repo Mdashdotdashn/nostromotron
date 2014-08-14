@@ -523,7 +523,7 @@ void SynthController::updatePitch()
 
     if (noteValue >= LOWEST_HW_NOTE)
     {
-      hwParameters_.pitch_ = uint16_t((noteValue-LOWEST_HW_NOTE)*835.666666666f+analogPitchFineTune_);
+      hwParameters_.pitch_ = uint16_t((noteValue-LOWEST_HW_NOTE)*844.023333333266f + analogPitchFineTune_);
       hwParameters_.gate_ = enableAnalog_;
     }
   } 
