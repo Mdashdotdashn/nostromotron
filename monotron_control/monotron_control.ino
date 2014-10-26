@@ -1,5 +1,5 @@
 #include "Hardware.h"
-#include "IntervalTimer.h"
+//#include "IntervalTimer.h"
 
 bool gMidiGateOn = false;
 uint8_t gMidiNoteValue = 0;

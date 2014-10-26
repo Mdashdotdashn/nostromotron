@@ -1,5 +1,5 @@
 #include "Hardware.h"
-#include "IntervalTimer.h"
+//#include "IntervalTimer.h"
 #include <SPI.h>
 
 const int8_t GATE_PIN = 5;
