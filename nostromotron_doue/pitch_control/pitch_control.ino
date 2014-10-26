@@ -1,15 +1,13 @@
 #include "Hardware.h"
-#include "IntervalTimer.h"
+//#include "IntervalTimer.h"
 
 bool gMidiGateOn = false;
 uint8_t gMidiNoteValue = 0;
 uint8_t gMidiCutOff = 127;
-uint8_t gCC2Value = 127;
+uint8_t gMidiCtrl2 = 0;
 int16_t gMidiPitchBend = 0;
 
 const uint8_t LOWEST_KEY = 24; // C2
-
-const int ledPin = 13;
 
 //-------------------------------------------------------------------------
 
@@ -34,18 +32,13 @@ void SOnNoteOff(byte channel, byte note, byte velocity)
 
 void SOnControlChange(byte channel, byte control, byte value)
 {
- 
   switch (control)
   {
     case 1:
       gMidiCutOff = value;
       break;
     case 2:
-      gCC2Value = 127 - value;
-     digitalWrite(ledPin, HIGH);   // set the LED on
-     delay(100);
-     digitalWrite(ledPin, LOW);    // set the LED off
-
+      gMidiCtrl2 = value;
       break;
   }
 }
@@ -72,13 +65,12 @@ uint16_t onSampleUpdate()
 void onParamUpdate(Hardware::Parameters& parameters)
 {
   parameters.gate_ = gMidiGateOn;
-  parameters.pitch_ = uint16_t(gCC2Value) << (1+8) ;
+  parameters.pitch_ = uint16_t(gMidiCtrl2 << (1+8));  // 8191/12
   parameters.cutoff_ = (gMidiCutOff<<1);
-}
+ }
 
 
 //-------------------------------------------------------------------------
-
 
 void setup()
 { 
@@ -100,8 +92,6 @@ void setup()
   usbMIDI.setHandleNoteOn(SOnNoteOn) ; 
   usbMIDI.setHandleControlChange(SOnControlChange) ; 
   usbMIDI.setHandlePitchChange(SOnPitchChange);
-  pinMode(ledPin, OUTPUT);
-
 }
 
 

@@ -1,5 +1,5 @@
 #include "Hardware.h"
-#include "IntervalTimer.h"
+//#include "IntervalTimer.h"
 #include <SPI.h>
 
 const int8_t GATE_PIN = 5;
@@ -64,8 +64,8 @@ void Hardware::onAudioUpdate()
   const uint8_t MCP4822_LOW_GAIN = 1;
   const uint8_t MCP4822_HIGH_GAIN = 0;
   val+=128;
-  SetDACValue(0, val, MCP4822_HIGH_GAIN);
-  SetDACValue(1, pitchValue_, MCP4822_HIGH_GAIN  );
+  SetDACValue(0, val, MCP4822_LOW_GAIN);
+  SetDACValue(1, pitchValue_, 0);
 }
  
   
@@ -78,8 +78,9 @@ Hardware &Hardware::SInstance()
   return sInstance; 
 }
 
-static IntervalTimer sTimer0;
-static IntervalTimer sTimer1;
+
+static IntervalTimer gTimer0;
+static IntervalTimer gTimer1;
 
 //-----------------------------------------------------------
 
@@ -111,11 +112,11 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   // Define our signal update rate way lower since we don't need
   // high range for control signals
 
-  sTimer0.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
+  gTimer0.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
 
   // Define our audio update rate using 44100 Hrz
   
-  sTimer1.begin(SOnAudioTimer, 1000000 / configuration_.audioRate_);
+  gTimer1.begin(SOnAudioTimer, 1000000 / configuration_.audioRate_);
 
 }
 
