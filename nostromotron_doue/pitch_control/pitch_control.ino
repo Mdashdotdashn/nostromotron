@@ -37,7 +37,7 @@ void SOnControlChange(byte channel, byte control, byte value)
       gMidiCutOff = value;
       break;
     case 2:
-      pitchControl = (value << 9);
+      pitchControl = (127-value) << 9;
       break;
   }
 }
