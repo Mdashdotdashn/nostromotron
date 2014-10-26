@@ -4,9 +4,8 @@
 bool gMidiGateOn = false;
 uint8_t gMidiNoteValue = 0;
 uint8_t gMidiCutOff = 127;
-uint8_t gMidiCtrl2 = 0;
 int16_t gMidiPitchBend = 0;
-
+uint16_t pitchControl = 0;
 const uint8_t LOWEST_KEY = 24; // C2
 
 //-------------------------------------------------------------------------
@@ -38,7 +37,7 @@ void SOnControlChange(byte channel, byte control, byte value)
       gMidiCutOff = value;
       break;
     case 2:
-      gMidiCtrl2 = value;
+      pitchControl = (value << 9);
       break;
   }
 }
@@ -65,7 +64,7 @@ uint16_t onSampleUpdate()
 void onParamUpdate(Hardware::Parameters& parameters)
 {
   parameters.gate_ = gMidiGateOn;
-  parameters.pitch_ = uint16_t(gMidiCtrl2 << (1+8));  // 8191/12
+  parameters.pitch_ = pitchControl;
   parameters.cutoff_ = (gMidiCutOff<<1);
  }
 
@@ -97,8 +96,10 @@ void setup()
 
 //-------------------------------------------------------------------------
 
+int sensorValue;
+
 void loop() 
 {
-  usbMIDI.read();
+  usbMIDI.read(); 
 }
 
