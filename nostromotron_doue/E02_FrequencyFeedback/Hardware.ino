@@ -11,28 +11,24 @@ const uint8_t PLS1_FEEDBACK_PIN = 23;
 
 //-----------------------------------------------------------
 
-size_t pls1TrackCnt = 0;
 size_t pls1TrackAudioTicks = 0;
-
-size_t lastPs1Count = 0;
-size_t lastAudioTicks = 0;
+size_t microSecComb = 0;
+size_t plsTicks =0;
 
 void onPls1Raised()
 {
   cli();
+  microSecComb += SIntervalInMicroSecs();
+  plsTicks++;
   if (pls1TrackAudioTicks > 44100)
   {
-    lastPs1Count = pls1TrackCnt;
-    lastAudioTicks = pls1TrackAudioTicks;
-    pls1TrackCnt = pls1TrackAudioTicks = 0;
-    
-    Serial.print("rough freq");
-    Serial.println(lastPs1Count * 22050.f / lastAudioTicks);
+    Serial.print("rough freq: ");
+    Serial.println(plsTicks * 500000.f /microSecComb);
+
+    pls1TrackAudioTicks = 0;
+    plsTicks = 0;
+    microSecComb = 0;
   } 
-  else
-  {
-    pls1TrackCnt++;
-  }
   sei();
 }
 
@@ -150,6 +146,8 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   // Initialize interrupt pin for PLS1 feedback
   
   pinMode(PLS1_FEEDBACK_PIN, INPUT);
+  
+  SInitIntervalEvaluator();
   attachInterrupt(PLS1_FEEDBACK_PIN, onPls1Raised, RISING); // interrrupt 1 is data ready
 
 }
