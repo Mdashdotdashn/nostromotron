@@ -144,10 +144,10 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   gTimer1.begin(SOnAudioTimer, 1000000.0 / configuration_.audioRate_);
 
   // Initialize interrupt pin for PLS1 feedback
+
+  SInitIntervalEvaluator();
   
   pinMode(PLS1_FEEDBACK_PIN, INPUT);
-  
-  SInitIntervalEvaluator();
   attachInterrupt(PLS1_FEEDBACK_PIN, onPls1Raised, RISING); // interrrupt 1 is data ready
 
 }
