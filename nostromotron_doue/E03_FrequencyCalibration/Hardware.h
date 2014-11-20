@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include <vector>
+#include <string.h>
 
 class Hardware
 {
@@ -30,6 +30,10 @@ class Hardware
     typedef uint16_t (*AudioCallback)();
     typedef void (*ParameterCallback)(Parameters& parameters);   
 
+    // Returns the current evaluated frequency from feedback
+    
+    float MeasuredVCOFrequency();
+    
     // Define the configuration struct
 
     struct Configuration
@@ -43,10 +47,12 @@ class Hardware
 
   public:
 
+    // Interrupt callbacks
     void onParameterUpdate();
     void onAudioUpdate();
+    void onPls1Raised();
     
-    Hardware() {};
+    Hardware();
     ~Hardware() {};
 
 
@@ -54,4 +60,12 @@ class Hardware
     void SetDACValue(uint8_t channel, uint16_t value, uint8_t gain);
     Configuration configuration_;
     uint16_t pitchValue_;
+    
+    
+  //-----------------------------------------------------------
+
+  size_t audioTicks_;
+  size_t microsSum_;
+  size_t plsTickCount_;
+  float measureVCOFreq_;
 };

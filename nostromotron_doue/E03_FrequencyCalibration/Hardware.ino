@@ -1,5 +1,4 @@
 #include "Hardware.h"
-//#include "IntervalTimer.h"
 #include <SPI.h>
 
 const int8_t GATE_PIN = 5;
@@ -9,27 +8,9 @@ const int8_t SPI_CS_PIN = 10;
 
 const uint8_t PLS1_FEEDBACK_PIN = 23;
 
-//-----------------------------------------------------------
-
-size_t pls1TrackAudioTicks = 0;
-size_t microSecComb = 0;
-size_t plsTicks =0;
-
-void onPls1Raised()
+static void onPls1Raised()
 {
-  cli();
-  microSecComb += SIntervalInMicroSecs();
-  plsTicks++;
-  if (pls1TrackAudioTicks > 44100)
-  {
-    Serial.print("rough freq: ");
-    Serial.println(plsTicks * 500000.f /microSecComb);
-
-    pls1TrackAudioTicks = 0;
-    plsTicks = 0;
-    microSecComb = 0;
-  } 
-  sei();
+  Hardware::SInstance().onPls1Raised();
 }
 
 //-----------------------------------------------------------
@@ -45,7 +26,24 @@ void SOnParameterTimer()
 void SOnAudioTimer()
 {
   Hardware::SInstance().onAudioUpdate();
-  pls1TrackAudioTicks++;
+}
+
+
+//-----------------------------------------------------------
+
+void Hardware::onPls1Raised()
+{
+  microsSum_ += SIntervalInMicroSecs();
+  plsTickCount_++;
+  
+  if (audioTicks_ > 44100)
+  {
+    measureVCOFreq_ = plsTickCount_ * 500000.f / microsSum_;
+
+    audioTicks_ = 0;
+    plsTickCount_ = 0;
+    microsSum_ = 0;
+  }
 }
 
 //-----------------------------------------------------------
@@ -60,6 +58,24 @@ void Hardware::onParameterUpdate()
   pitchValue_ = parameters.pitch_;
 }
 
+
+//-----------------------------------------------------------
+
+Hardware::Hardware()
+: audioTicks_(0)
+, microsSum_(0)
+, plsTickCount_(0)
+, measureVCOFreq_(1.)
+{
+}
+
+
+//-----------------------------------------------------------
+
+float Hardware::MeasuredVCOFrequency()
+{
+  return measureVCOFreq_;
+}
 
 //-----------------------------------------------------------
 
@@ -91,9 +107,11 @@ void Hardware::onAudioUpdate()
   val+=128;
   SetDACValue(0, val, MCP4822_LOW_GAIN);
   SetDACValue(1, pitchValue_, 0);
-}
- 
   
+  audioTicks_++;
+}
+
+ 
 //-----------------------------------------------------------
 
 static Hardware sInstance;
@@ -148,7 +166,7 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   SInitIntervalEvaluator();
   
   pinMode(PLS1_FEEDBACK_PIN, INPUT);
-  attachInterrupt(PLS1_FEEDBACK_PIN, onPls1Raised, RISING); // interrrupt 1 is data ready
+  attachInterrupt(PLS1_FEEDBACK_PIN, ::onPls1Raised, RISING); // interrrupt 1 is data ready
 
 }
 
