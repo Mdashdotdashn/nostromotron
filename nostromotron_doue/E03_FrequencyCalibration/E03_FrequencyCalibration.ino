@@ -1,11 +1,14 @@
 #include "Hardware.h"
-//#include "IntervalTimer.h"
+#include "Frequencies.h"
+#include "LinearRegression.h"
 
 bool gMidiGateOn = false;
 uint8_t gMidiNoteValue = 0;
 uint8_t gMidiCutOff = 127;
 int16_t gMidiPitchBend = 0;
 uint16_t pitchControl = 0xFFFF;
+
+float gSlope, gIntercept;
 //const uint8_t LOWEST_KEY = 24; // C2
 
 //-------------------------------------------------------------------------
@@ -14,13 +17,14 @@ void SOnNoteOn(byte channel, byte note, byte velocity)
 {
   gMidiNoteValue = note;
   float freq = sNoteToFrequency[note];
-  float targetDAC = (1061.3065592413f - freq) / 0.015598034068237f 
+//  float targetDAC = (1034.4928702938f - freq) / 0.015350199250741f;
+  float targetDAC = freq*gSlope + gIntercept;
   Serial.print(note);
   Serial.print(" - ");
   Serial.print(freq, 2);
   Serial.print(" -> ");
   Serial.println(targetDAC);
-  if ((targetDAC > 0) && targetDAC < 65536))
+  if (targetDAC > 0 && targetDAC < 65536)
   { 
     gMidiGateOn = true;
     pitchControl = targetDAC;
@@ -45,7 +49,6 @@ void SOnControlChange(byte channel, byte control, byte value)
       gMidiCutOff = value;
       break;
     case 2:
-      pitchControl = (127-value) << 9;
       break;
   }
 }
@@ -75,6 +78,38 @@ void onParamUpdate(Hardware::Parameters& parameters)
   parameters.pitch_ = pitchControl;
   parameters.cutoff_ = (gMidiCutOff<<1);
  }
+ 
+ 
+//-------------------------------------------------------------------------
+
+void SCalibrate()
+{
+  delay(3000);
+  gMidiGateOn = true;
+  Serial.print("Calibrating...");
+
+  size_t size = 4;
+  float cv[size];
+  float pitch[size];
+  char *progress="FEDCBA9876543210";
+  
+  for (size_t i = 0; i < size; i++)
+  {
+    pitchControl = i << 14;
+    pitchControl += 0x3FFF;
+    Serial.print(progress[i%16]);
+    delay(2000);
+    
+    cv[i] = pitchControl;
+    pitch[i] = Hardware::SInstance().MeasuredVCOFrequency();
+  }
+  Serial.println("Done");
+  gMidiGateOn = false;  
+  float slope, intercept;
+  
+  SLinearRegression(pitch, cv, size, &gSlope, &gIntercept);
+}
+
 
 //-------------------------------------------------------------------------
 
@@ -101,40 +136,26 @@ void setup()
 
   Serial.begin(57600);  
 
-  // wait for go
-  delay(10000);
+  SCalibrate();
 }
 
 //-------------------------------------------------------------------------
 
-size_t i = 0;
-float lastFreq = 0;
-
-void printCalibrationTable()
-{
-  if (i < 0x10)
-  {
-    pitchControl = i << 12;
-    if (i>0)
-    {
-      pitchControl |= 0xFFF;
-    }
-    Serial.print(pitchControl);
-    delay(2000);
-    float freq = Hardware::SInstance().MeasuredVCOFrequency();
-    Serial.print(",");
-    Serial.println(freq, 2);
-    lastFreq = freq;
-    i+=1;
-  }
-}
-
-
-//-------------------------------------------------------------------------
+float lastMeasure;
 
 void loop() 
 {
 //  printCalibrationTable();
   usbMIDI.read();
+  if (gMidiGateOn)
+  {
+    float freq = Hardware::SInstance().MeasuredVCOFrequency();
+    if (freq != lastMeasure)
+    {
+      Serial.print("Measured freq: ");
+      Serial.println(freq);
+      lastMeasure = freq;
+    }
+  }
 }
 
