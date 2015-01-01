@@ -11,7 +11,6 @@ int16_t gMidiPitchBend = 0;
 uint16_t pitchControl = 0xFFFF;
 
 float gSlope, gIntercept;
-int LED_PIN = 13;
 
 //const uint8_t LOWEST_KEY = 24; // C2
 
@@ -55,7 +54,7 @@ void SOnControlChange(byte channel, byte control, byte value)
       break;
     case 2:
       float mix = float(value) / 127.f;
-      gDecayFactor = 0.9 + mix * 0.097; 
+      gDecayFactor = 0.985 + mix * 0.0145; 
       break;
   }
 }
@@ -82,7 +81,6 @@ uint16_t onSampleUpdate()
 void onParamUpdate(Hardware::Parameters& parameters)
 {
   bool gateOn = gMidiGateCount > 0;
-  digitalWrite(LED_PIN, gate
   if (!gateOn) gVCA *= gDecayFactor;
   parameters.gate_ = gateOn;
   parameters.pitch_ = pitchControl;
@@ -147,7 +145,6 @@ void setup()
 
 //  Serial.begin(57600);  
 
-  pinMode(LED_PIN, OUTPUT);
   SCalibrate();
 }
 
