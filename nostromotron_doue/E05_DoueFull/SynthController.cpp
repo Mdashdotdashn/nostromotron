@@ -565,11 +565,7 @@ void SynthController::updatePitch()
 
     float freq = sNoteToFrequency[int(anaNote)];
     float targetDAC = freq * pitchSlope_ + pitchIntercept_;
-
-    Serial.print(freq);
-    Serial.print("targetDac ");
-    Serial.println(targetDAC);
-
+    
     if (targetDAC > 0 && targetDAC < 65536)
     {  
         hwParameters_.pitch_ = targetDAC;
@@ -592,7 +588,12 @@ void SynthController::onParamUpdate(Hardware::Parameters &parameters)
   digiPitchControl_.Trigger();  
   updatePitch();
   updateCutoff();
+    
+  const fixed envValue =envelope_.GetScaledValue();
+  float vca = fp2fl(envValue) * 255.f;
+  hwParameters_.vca_ = 255 - uint8_t(vca);
   parameters = hwParameters_;
+  if (vca > 0) Serial.println(parameters.vca_);
 }
 
 
@@ -603,8 +604,7 @@ fixed SynthController::ProcessSample()
   const fixed noise = noiseGenerator_.ProcessSample();
   const fixed osc = oscillator_.ProcessSample();
   const fixed value=fp_add(noise,osc);
-  const fixed envValue =envelope_.GetScaledValue();
-  return fp_mul(value, envValue);
+  return value;
 }
 
 

@@ -131,8 +131,8 @@ float Hardware::MeasuredVCOFrequency()
 
 //-----------------------------------------------------------
 
-static IntervalTimer sTimer0;
-static IntervalTimer sTimer1;
+static IntervalTimer gTimer0;
+static IntervalTimer gTimer1;
 
 //-----------------------------------------------------------
 
@@ -154,6 +154,7 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   
   const unsigned int PWM_FREQUENCY = 31250;
   analogWriteFrequency(CUTOFF_PIN, PWM_FREQUENCY);	
+  analogWriteFrequency(VCA_PIN, PWM_FREQUENCY);	
 
   // SPI Bus setup to communicate with the MCP4822
 
@@ -163,7 +164,7 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   
   // Define our audio update rate using 44100 Hrz
   
-  sTimer0.begin(SOnAudioTimer, 1000000.0f / float(configuration_.audioRate_));
+  gTimer0.begin(SOnAudioTimer, 1000000.0f / float(configuration_.audioRate_));
   
   // Makes sre our audio interrupt runs with the highest priority
   NVIC_SET_PRIORITY(IRQ_PIT_CH0, 0);
@@ -171,10 +172,15 @@ bool Hardware::Init(const Hardware::Configuration& configuration)
   // Define our signal update rate way lower since we don't need
   // high range for control signals
 
-  sTimer1.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
+  gTimer1.begin(SOnParameterTimer, 1000000 / configuration_.paramRate_);
 //  NVIC_SET_PRIORITY(IRQ_PIT_CH1, 1);
 
+  // Initialize interrupt pin for PLS1 feedback
 
+  SInitIntervalEvaluator();
+  
+  pinMode(PLS1_FEEDBACK_PIN, INPUT);
+  attachInterrupt(PLS1_FEEDBACK_PIN, ::onPls1Raised, RISING); // interrrupt 1 is data ready
 }
 
 //-----------------------------------------------------------
